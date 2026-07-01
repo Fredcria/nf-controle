@@ -1,0 +1,585 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<title>Notas Fiscais</title>
+<meta name="theme-color" content="#26241E" />
+<link rel="manifest" href="manifest.json" />
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --paper:#F7F2E4;
+    --paper-alt:#EFE7D2;
+    --ink:#26241E;
+    --ink-soft:#726c58;
+    --stamp:#B23A2E;
+    --stamp-dark:#8f2e24;
+    --success:#4c7b5b;
+    --line:#d8cfb3;
+    --radius:14px;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    min-height:100vh;
+    background:var(--ink);
+    background-image:
+      radial-gradient(circle at 10% 0%, rgba(255,255,255,0.03), transparent 40%);
+    font-family:'Inter',sans-serif;
+    color:var(--ink);
+    display:flex;
+    justify-content:center;
+    padding:0 0 60px;
+  }
+  .app{
+    width:100%;
+    max-width:480px;
+    background:var(--ink);
+    min-height:100vh;
+  }
+  header{
+    padding:28px 20px 20px;
+    color:var(--paper);
+  }
+  header .eyebrow{
+    font-family:'JetBrains Mono',monospace;
+    font-size:11px;
+    letter-spacing:0.18em;
+    text-transform:uppercase;
+    color:var(--stamp);
+    font-weight:600;
+  }
+  header h1{
+    font-family:'JetBrains Mono',monospace;
+    font-size:26px;
+    margin:6px 0 4px;
+    letter-spacing:-0.01em;
+  }
+  header p{
+    margin:0;
+    font-size:13px;
+    color:#a39d87;
+  }
+  .settings-btn{
+    position:absolute;
+    top:24px; right:20px;
+    background:none;
+    border:1px solid #4a4638;
+    color:#a39d87;
+    border-radius:8px;
+    padding:6px 10px;
+    font-size:12px;
+    font-family:'JetBrains Mono',monospace;
+    cursor:pointer;
+  }
+
+  .ticket{
+    position:relative;
+    background:var(--paper);
+    border-radius:var(--radius);
+    margin:0 16px 16px;
+    padding:20px 18px 22px;
+    box-shadow:0 12px 30px rgba(0,0,0,0.35);
+  }
+  .ticket::before{
+    content:"";
+    position:absolute;
+    top:-7px; left:16px; right:16px; height:14px;
+    background-image: radial-gradient(circle at 8px 7px, var(--ink) 7px, transparent 7.5px);
+    background-size:16px 14px;
+    background-repeat:repeat-x;
+  }
+
+  .upload-zone{
+    border:2px dashed var(--line);
+    border-radius:10px;
+    padding:26px 16px;
+    text-align:center;
+    cursor:pointer;
+    background:var(--paper-alt);
+  }
+  .upload-zone strong{
+    display:block;
+    font-family:'JetBrains Mono',monospace;
+    font-size:14px;
+    margin-bottom:4px;
+  }
+  .upload-zone span{
+    font-size:12px;
+    color:var(--ink-soft);
+  }
+  input[type=file]{ display:none; }
+
+  .queue{ margin:0 16px; display:flex; flex-direction:column; gap:10px; }
+  .queue-item{
+    background:var(--paper);
+    border-radius:10px;
+    padding:10px 12px;
+    display:flex;
+    align-items:center;
+    gap:10px;
+    box-shadow:0 4px 12px rgba(0,0,0,0.25);
+  }
+  .queue-item img{
+    width:44px; height:44px; object-fit:cover; border-radius:6px; flex-shrink:0;
+    border:1px solid var(--line);
+  }
+  .queue-item .meta{ flex:1; min-width:0; }
+  .queue-item .meta .name{
+    font-size:12px; font-weight:600;
+    white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+  }
+  .queue-item .status{
+    font-family:'JetBrains Mono',monospace;
+    font-size:10.5px;
+    letter-spacing:0.04em;
+    text-transform:uppercase;
+    margin-top:2px;
+  }
+  .status.waiting{ color:var(--ink-soft); }
+  .status.working{ color:#a97d1c; }
+  .status.review{ color:var(--stamp); }
+  .status.saved{ color:var(--success); }
+  .status.error{ color:var(--stamp-dark); }
+
+  .review-card{
+    background:var(--paper);
+    border-radius:var(--radius);
+    margin:14px 16px 0;
+    padding:18px;
+    box-shadow:0 12px 30px rgba(0,0,0,0.35);
+  }
+  .review-card h2{
+    font-family:'JetBrains Mono',monospace;
+    font-size:15px;
+    margin:0 0 14px;
+    display:flex;
+    align-items:center;
+    gap:8px;
+  }
+  .field{ margin-bottom:12px; }
+  .field label{
+    display:block;
+    font-size:10.5px;
+    text-transform:uppercase;
+    letter-spacing:0.06em;
+    color:var(--ink-soft);
+    margin-bottom:4px;
+    font-family:'JetBrains Mono',monospace;
+  }
+  .field input{
+    width:100%;
+    padding:9px 10px;
+    border:1px solid var(--line);
+    border-radius:8px;
+    font-size:14px;
+    background:#fff;
+    font-family:'Inter',sans-serif;
+    color:var(--ink);
+  }
+  .row2{ display:flex; gap:10px; }
+  .row2 .field{ flex:1; }
+
+  table.itens{ width:100%; border-collapse:collapse; margin-top:6px; }
+  table.itens th{
+    font-family:'JetBrains Mono',monospace;
+    font-size:9.5px; text-transform:uppercase; color:var(--ink-soft);
+    text-align:left; padding-bottom:4px; border-bottom:1px dashed var(--line);
+  }
+  table.itens td{ padding:5px 3px; border-bottom:1px dashed var(--line); }
+  table.itens input{
+    width:100%; border:none; background:transparent; font-size:13px;
+    padding:4px 2px; color:var(--ink); font-family:'Inter',sans-serif;
+  }
+  table.itens input:focus{ outline:1px solid var(--stamp); border-radius:4px; }
+  .col-produto{ width:44%; }
+  .col-qtd{ width:16%; }
+  .col-vunit{ width:20%; }
+  .col-vtotal{ width:20%; }
+  .rm-item{
+    background:none; border:none; color:var(--stamp); font-size:16px; cursor:pointer; padding:0 4px;
+  }
+  .add-item{
+    margin-top:8px;
+    font-family:'JetBrains Mono',monospace;
+    font-size:11.5px;
+    background:none; border:1px dashed var(--line); color:var(--ink-soft);
+    border-radius:6px; padding:6px 10px; cursor:pointer;
+  }
+
+  .actions{ display:flex; gap:10px; margin-top:18px; }
+  .btn{
+    flex:1;
+    border:none;
+    border-radius:8px;
+    padding:12px 10px;
+    font-family:'JetBrains Mono',monospace;
+    font-size:12.5px;
+    font-weight:700;
+    letter-spacing:0.03em;
+    text-transform:uppercase;
+    cursor:pointer;
+  }
+  .btn-save{ background:var(--stamp); color:#fff; }
+  .btn-save:active{ background:var(--stamp-dark); }
+  .btn-discard{ background:none; color:var(--ink-soft); border:1px solid var(--line); }
+
+  .empty{
+    margin:16px; padding:26px 16px;
+    text-align:center; color:#7a7462;
+    font-family:'JetBrains Mono',monospace;
+    font-size:12px;
+    border:1px dashed #4a4638;
+    border-radius:10px;
+    color:#a39d87;
+  }
+
+  .toast{
+    position:fixed; bottom:20px; left:50%; transform:translateX(-50%);
+    background:var(--paper); color:var(--ink);
+    padding:10px 18px; border-radius:30px;
+    font-family:'JetBrains Mono',monospace; font-size:12px;
+    box-shadow:0 8px 24px rgba(0,0,0,0.4);
+    opacity:0; pointer-events:none; transition:opacity .25s ease;
+    z-index:50;
+  }
+  .toast.show{ opacity:1; }
+
+  .modal-backdrop{
+    position:fixed; inset:0; background:rgba(0,0,0,0.55);
+    display:none; align-items:flex-end; justify-content:center; z-index:60;
+  }
+  .modal-backdrop.show{ display:flex; }
+  .modal{
+    background:var(--paper); width:100%; max-width:480px;
+    border-radius:16px 16px 0 0; padding:22px 18px 26px;
+  }
+  .modal h3{ font-family:'JetBrains Mono',monospace; font-size:14px; margin:0 0 14px; }
+  .modal .field{ margin-bottom:12px; }
+  .modal-actions{ display:flex; gap:10px; margin-top:14px; }
+</style>
+</head>
+<body>
+<div class="app">
+  <header style="position:relative;">
+    <button class="settings-btn" id="settingsBtn">⚙ config</button>
+    <div class="eyebrow">Controle Interno</div>
+    <h1>Notas Fiscais</h1>
+    <p>Foto da nota → dados extraídos → planilha.</p>
+  </header>
+
+  <div class="ticket">
+    <label class="upload-zone" for="fileInput">
+      <strong>+ Adicionar fotos</strong>
+      <span>Uma nota ou várias de uma vez</span>
+    </label>
+    <input id="fileInput" type="file" accept="image/*" capture="environment" multiple />
+  </div>
+
+  <div class="queue" id="queue"></div>
+  <div class="empty" id="emptyState">Nenhuma nota adicionada ainda.</div>
+
+  <div id="reviewSlot"></div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<div class="modal-backdrop" id="settingsModal">
+  <div class="modal">
+    <h3>Configuração</h3>
+    <div class="field">
+      <label>URL do Apps Script (Web App)</label>
+      <input id="cfgUrl" placeholder="https://script.google.com/macros/s/.../exec" />
+    </div>
+    <div class="field">
+      <label>Token de acesso</label>
+      <input id="cfgToken" placeholder="mesmo token definido no Apps Script" />
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-discard" id="cfgCancel">Cancelar</button>
+      <button class="btn btn-save" id="cfgSave">Salvar</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const CONFIG = {
+  get url(){ return localStorage.getItem('notas_api_url') || ''; },
+  get token(){ return localStorage.getItem('notas_api_token') || ''; }
+};
+
+const queueEl = document.getElementById('queue');
+const emptyState = document.getElementById('emptyState');
+const reviewSlot = document.getElementById('reviewSlot');
+const fileInput = document.getElementById('fileInput');
+const toastEl = document.getElementById('toast');
+
+let items = []; // {id, fileName, thumb, base64, mimeType, status, data}
+let activeReviewId = null;
+
+fileInput.addEventListener('change', async (e) => {
+  const files = Array.from(e.target.files || []);
+  fileInput.value = '';
+  if (!files.length) return;
+  if (!CONFIG.url) { openSettings(); return; }
+
+  for (const file of files) {
+    const item = {
+      id: 'q' + Date.now() + Math.random().toString(16).slice(2),
+      fileName: file.name,
+      status: 'waiting',
+      data: null
+    };
+    const { base64, mimeType, dataUrl } = await fileToBase64(file);
+    item.base64 = base64;
+    item.mimeType = mimeType;
+    item.thumb = dataUrl;
+    items.push(item);
+    render();
+    processItem(item.id);
+  }
+});
+
+function fileToBase64(file){
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => {
+      const dataUrl = reader.result;
+      const base64 = dataUrl.split(',')[1];
+      resolve({ base64, mimeType: file.type || 'image/jpeg', dataUrl });
+    };
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
+}
+
+async function processItem(id){
+  const item = items.find(i => i.id === id);
+  if (!item) return;
+  item.status = 'working';
+  render();
+  try {
+    const res = await callApi({ action: 'extract', image: item.base64, mimeType: item.mimeType, token: CONFIG.token });
+    if (!res.success) throw new Error(res.error || 'Falha na extração.');
+    item.data = normalizeData(res.data);
+    item.status = 'review';
+    render();
+    if (!activeReviewId) openReview(item.id);
+  } catch (err) {
+    item.status = 'error';
+    item.error = err.message;
+    render();
+  }
+}
+
+function normalizeData(d){
+  return {
+    data: d.data || '',
+    fornecedor: d.fornecedor || '',
+    numero: d.numero || '',
+    valorTotal: d.valorTotal ?? '',
+    itens: (d.itens || []).map(it => ({
+      produto: it.produto || '',
+      quantidade: it.quantidade ?? '',
+      valorUnitario: it.valorUnitario ?? '',
+      valorTotal: it.valorTotal ?? ''
+    }))
+  };
+}
+
+async function callApi(payload){
+  const resp = await fetch(CONFIG.url, {
+    method: 'POST',
+    // text/plain evita preflight CORS no Apps Script
+    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+    body: JSON.stringify(payload)
+  });
+  return resp.json();
+}
+
+function render(){
+  emptyState.style.display = items.length ? 'none' : 'block';
+  queueEl.innerHTML = items.map(item => `
+    <div class="queue-item" data-id="${item.id}" onclick="handleQueueClick('${item.id}')">
+      <img src="${item.thumb}" alt="" />
+      <div class="meta">
+        <div class="name">${escapeHtml(item.fileName)}</div>
+        <div class="status ${item.status}">${statusLabel(item)}</div>
+      </div>
+    </div>
+  `).join('');
+}
+
+function statusLabel(item){
+  switch(item.status){
+    case 'waiting': return 'Aguardando';
+    case 'working': return 'Extraindo dados…';
+    case 'review': return 'Toque para revisar';
+    case 'saved': return '✓ Salvo na planilha';
+    case 'error': return 'Erro — toque para repetir';
+    default: return '';
+  }
+}
+
+function handleQueueClick(id){
+  const item = items.find(i => i.id === id);
+  if (!item) return;
+  if (item.status === 'review') openReview(id);
+  if (item.status === 'error') processItem(id);
+}
+
+function openReview(id){
+  activeReviewId = id;
+  const item = items.find(i => i.id === id);
+  const d = item.data;
+  reviewSlot.innerHTML = `
+    <div class="review-card">
+      <h2>📋 Revisar antes de salvar</h2>
+      <div class="row2">
+        <div class="field">
+          <label>Data</label>
+          <input id="f_data" value="${escapeAttr(d.data)}" placeholder="DD/MM/AAAA" />
+        </div>
+        <div class="field">
+          <label>Nº da nota</label>
+          <input id="f_numero" value="${escapeAttr(d.numero)}" />
+        </div>
+      </div>
+      <div class="field">
+        <label>Fornecedor</label>
+        <input id="f_fornecedor" value="${escapeAttr(d.fornecedor)}" />
+      </div>
+      <div class="field">
+        <label>Valor total</label>
+        <input id="f_valorTotal" value="${escapeAttr(d.valorTotal)}" inputmode="decimal" />
+      </div>
+
+      <table class="itens">
+        <thead>
+          <tr>
+            <th class="col-produto">Produto</th>
+            <th class="col-qtd">Qtd</th>
+            <th class="col-vunit">V.Unit</th>
+            <th class="col-vtotal">Total</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody id="itensBody"></tbody>
+      </table>
+      <button class="add-item" id="addItemBtn">+ item</button>
+
+      <div class="actions">
+        <button class="btn btn-discard" id="discardBtn">Descartar</button>
+        <button class="btn btn-save" id="saveBtn">Salvar</button>
+      </div>
+    </div>
+  `;
+  renderItensRows(d.itens);
+  document.getElementById('addItemBtn').onclick = () => {
+    d.itens.push({ produto:'', quantidade:'', valorUnitario:'', valorTotal:'' });
+    renderItensRows(d.itens);
+  };
+  document.getElementById('discardBtn').onclick = () => {
+    items = items.filter(i => i.id !== id);
+    activeReviewId = null;
+    reviewSlot.innerHTML = '';
+    render();
+  };
+  document.getElementById('saveBtn').onclick = () => saveItem(id);
+}
+
+function renderItensRows(itensArr){
+  const body = document.getElementById('itensBody');
+  body.innerHTML = itensArr.map((it, idx) => `
+    <tr>
+      <td class="col-produto"><input data-idx="${idx}" data-field="produto" value="${escapeAttr(it.produto)}" /></td>
+      <td class="col-qtd"><input data-idx="${idx}" data-field="quantidade" value="${escapeAttr(it.quantidade)}" inputmode="decimal" /></td>
+      <td class="col-vunit"><input data-idx="${idx}" data-field="valorUnitario" value="${escapeAttr(it.valorUnitario)}" inputmode="decimal" /></td>
+      <td class="col-vtotal"><input data-idx="${idx}" data-field="valorTotal" value="${escapeAttr(it.valorTotal)}" inputmode="decimal" /></td>
+      <td><button class="rm-item" data-idx="${idx}">×</button></td>
+    </tr>
+  `).join('');
+  body.querySelectorAll('input').forEach(inp => {
+    inp.addEventListener('input', () => {
+      itensArr[inp.dataset.idx][inp.dataset.field] = inp.value;
+    });
+  });
+  body.querySelectorAll('.rm-item').forEach(btn => {
+    btn.addEventListener('click', () => {
+      itensArr.splice(btn.dataset.idx, 1);
+      renderItensRows(itensArr);
+    });
+  });
+}
+
+async function saveItem(id){
+  const item = items.find(i => i.id === id);
+  const d = item.data;
+  d.data = document.getElementById('f_data').value;
+  d.numero = document.getElementById('f_numero').value;
+  d.fornecedor = document.getElementById('f_fornecedor').value;
+  d.valorTotal = parseFloat(document.getElementById('f_valorTotal').value) || 0;
+  d.itens = d.itens.map(it => ({
+    produto: it.produto,
+    quantidade: parseFloat(it.quantidade) || 0,
+    valorUnitario: parseFloat(it.valorUnitario) || 0,
+    valorTotal: parseFloat(it.valorTotal) || 0
+  }));
+
+  const saveBtn = document.getElementById('saveBtn');
+  saveBtn.disabled = true;
+  saveBtn.textContent = 'Salvando…';
+  try {
+    const res = await callApi({
+      action: 'save', data: d, image: item.base64, mimeType: item.mimeType, token: CONFIG.token
+    });
+    if (!res.success) throw new Error(res.error || 'Falha ao salvar.');
+    item.status = 'saved';
+    activeReviewId = null;
+    reviewSlot.innerHTML = '';
+    render();
+    showToast('Nota salva na planilha ✓');
+    const next = items.find(i => i.status === 'review');
+    if (next) openReview(next.id);
+  } catch (err) {
+    showToast('Erro: ' + err.message);
+    saveBtn.disabled = false;
+    saveBtn.textContent = 'Salvar';
+  }
+}
+
+function showToast(msg){
+  toastEl.textContent = msg;
+  toastEl.classList.add('show');
+  setTimeout(() => toastEl.classList.remove('show'), 2600);
+}
+
+function escapeHtml(s){ return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+function escapeAttr(s){ return escapeHtml(s ?? ''); }
+
+// Settings modal
+const settingsModal = document.getElementById('settingsModal');
+document.getElementById('settingsBtn').onclick = openSettings;
+document.getElementById('cfgCancel').onclick = () => settingsModal.classList.remove('show');
+document.getElementById('cfgSave').onclick = () => {
+  localStorage.setItem('notas_api_url', document.getElementById('cfgUrl').value.trim());
+  localStorage.setItem('notas_api_token', document.getElementById('cfgToken').value.trim());
+  settingsModal.classList.remove('show');
+  showToast('Configuração salva');
+};
+function openSettings(){
+  document.getElementById('cfgUrl').value = CONFIG.url;
+  document.getElementById('cfgToken').value = CONFIG.token;
+  settingsModal.classList.add('show');
+}
+
+render();
+
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('sw.js').catch(() => {});
+}
+</script>
+</body>
+</html>

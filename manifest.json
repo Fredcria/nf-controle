@@ -1,0 +1,9 @@
+{
+  "name": "Notas Fiscais",
+  "short_name": "Notas",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#26241E",
+  "theme_color": "#26241E",
+  "icons": []
+}
