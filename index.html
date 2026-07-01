@@ -421,7 +421,7 @@ function statusLabel(item){
     case 'working': return 'Extraindo dados…';
     case 'review': return 'Toque para revisar';
     case 'saved': return '✓ Salvo na planilha';
-    case 'error': return 'Erro — toque para repetir';
+    case 'error': return 'Erro: ' + (item.error || 'desconhecido') + ' — toque p/ repetir';
     default: return '';
   }
 }
