@@ -1,4 +1,4 @@
-const CACHE = 'notas-fiscais-v2';
+const CACHE = 'notas-fiscais-v3';
 const ASSETS = ['./', './index.html', './manifest.json'];
 
 self.addEventListener('install', (e) => {
